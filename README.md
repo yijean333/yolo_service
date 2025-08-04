@@ -46,7 +46,7 @@ ngrok http http://localhost:8000
 
 ## Android APP
 
-範例 APP 會用 ngrok URL 呼叫 `/predict` 上傳圖片，拿到任務 ID 後，持續查 `/task/{task_id}` 獲得辨識結果。
+APP 會用 ngrok URL 呼叫 `/predict` 上傳圖片，拿到任務 ID 後，持續查 `/task/{task_id}` 獲得辨識結果。
 
 ---
 
