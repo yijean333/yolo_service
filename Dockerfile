@@ -16,6 +16,12 @@ RUN apt-get update && apt-get install -y \
 # 複製需求檔案
 COPY requirements.txt .
 
+# requirements.txt（不含 torch/torchvision）
+RUN pip install --no-cache-dir \
+  torch==2.1.0+cpu \
+  torchvision==0.16.0+cpu \
+  --index-url https://download.pytorch.org/whl/cpu
+  
 # 安裝 Python 依賴
 RUN pip install --no-cache-dir -r requirements.txt
 
