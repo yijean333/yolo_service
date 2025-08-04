@@ -1,6 +1,6 @@
 # YOLOv8 物件偵測服務
 
-簡單透過 FastAPI + Ultralytics YOLOv8 建立的圖片物件偵測 API，支援非同步任務佇列。
+透過 FastAPI + Ultralytics YOLOv8 建立的圖片物件偵測 API，支援非同步任務佇列。
 
 ---
 
