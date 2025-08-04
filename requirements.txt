@@ -1,0 +1,12 @@
+# 手動指定 torch 下載網址，避免超長編譯時間
+https://download.pytorch.org/whl/cpu/torch-2.1.0%2Bcpu-cp39-cp39-linux_x86_64.whl
+ultralytics
+opencv-python
+fastapi
+uvicorn[standard]
+python-multipart
+redis
+aioredis
+celery
+asyncio-throttle
+
