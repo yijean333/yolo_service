@@ -41,7 +41,7 @@ ngrok http http://localhost:8000
 
 * POST `/predict`：上傳圖片，回傳任務 ID
 * GET `/task/{task_id}`：查詢辨識結果
-* 更多 API 功能和詳細說明，請參考:{https://你的-ngrok網址/docs}
+* 更多 API 功能和詳細說明，請參考: `https://你的-ngrok網址/docs`
 ---
 
 ## Android APP
