@@ -9,4 +9,4 @@ redis
 aioredis
 celery
 asyncio-throttle
-
+numpy<2
