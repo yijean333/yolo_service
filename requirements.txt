@@ -1,5 +1,4 @@
-# 手動指定 torch 下載網址，避免超長編譯時間
-https://download.pytorch.org/whl/cpu/torch-2.1.0%2Bcpu-cp39-cp39-linux_x86_64.whl
+# requirements.txt（不含 torch/torchvision）
 ultralytics
 opencv-python
 fastapi
@@ -9,4 +8,4 @@ redis
 aioredis
 celery
 asyncio-throttle
-numpy<2
+numpy==1.26.4
