@@ -17,7 +17,18 @@ async def lifespan(app: FastAPI):
     global model, device, queue_service
     
     print("正在載入模型...")
-    model = YOLO("best.pt")
+    # 自動選擇可用的模型檔案
+    import os
+    if os.path.exists("best.pt") and os.path.getsize("best.pt") > 1000:  # 檢查檔案大小
+        model_path = "best.pt"
+        print("使用自訓練模型: best.pt")
+    elif os.path.exists("yolov8n.pt"):
+        model_path = "yolov8n.pt" 
+        print("使用預訓練模型: yolov8n.pt")
+    else:
+        raise FileNotFoundError("找不到有效的模型檔案")
+    
+    model = YOLO(model_path)
     
     # 設置設備
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
