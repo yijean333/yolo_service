@@ -1,6 +1,7 @@
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.responses import JSONResponse, PlainTextResponse
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 from ultralytics import YOLO
 import cv2
 import numpy as np
@@ -10,7 +11,36 @@ import asyncio
 import uvicorn
 from queue_service import AsyncQueueService, TaskStatus
 
-app = FastAPI(title="YOLOv8 隊列檢測服務", version="1.0.0")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # 啟動時初始化
+    global model, device, queue_service
+    
+    print("正在載入模型...")
+    model = YOLO("best.pt")
+    
+    # 設置設備
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    model.to(device)
+    print(f"模型已載入到設備: {device}")
+    
+    if device.type == 'cpu':
+        torch.set_num_threads(4)
+    
+    # 初始化隊列服務（2個工作者，最大隊列100）
+    queue_service = AsyncQueueService(max_queue_size=100, max_workers=2)
+    await queue_service.start_workers(run_detection_sync)
+    
+    print("隊列服務已啟動")
+    
+    yield
+    
+    # 關閉時清理
+    if queue_service:
+        await queue_service.stop_workers()
+    print("隊列服務已停止")
+
+app = FastAPI(title="YOLOv8 隊列檢測服務", version="1.0.0", lifespan=lifespan)
 
 # 開放跨域
 app.add_middleware(
@@ -97,35 +127,7 @@ def run_detection_sync(image_data: bytes):
         print(f"檢測錯誤: {str(e)}")
         raise e
 
-@app.on_event("startup")
-async def startup_event():
-    """啟動時初始化"""
-    global model, device, queue_service
-    
-    print("正在載入模型...")
-    model = YOLO("best.pt")
-    
-    # 設置設備
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    model.to(device)
-    print(f"模型已載入到設備: {device}")
-    
-    if device.type == 'cpu':
-        torch.set_num_threads(4)
-    
-    # 初始化隊列服務（2個工作者，最大隊列100）
-    queue_service = AsyncQueueService(max_queue_size=100, max_workers=2)
-    await queue_service.start_workers(run_detection_sync)
-    
-    print("隊列服務已啟動")
 
-@app.on_event("shutdown")
-async def shutdown_event():
-    """關閉時清理"""
-    global queue_service
-    if queue_service:
-        await queue_service.stop_workers()
-    print("隊列服務已停止")
 
 @app.get("/")
 def health():
