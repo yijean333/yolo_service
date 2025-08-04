@@ -26,21 +26,22 @@ cd yolo_service
 2. **用 Docker 建置並執行**
 
 ```bash
-docker build --no-cache -t yolo_service .
+docker build -t yolo_service .
 docker run -p 8000:8000 yolo_service
 ```
 
 3. **用 ngrok 暴露服務**
 
 ```bash
-ngrok http 8000
+ngrok config add-authtoken <你的-authtoken-字串> # 推薦但不必要
+ngrok http http://localhost:8000
 ```
 
 4. **API 簡介**
 
 * POST `/predict`：上傳圖片，回傳任務 ID
 * GET `/task/{task_id}`：查詢辨識結果
-
+* 更多 API 功能和詳細說明，請參考:[https://你的-ngrok網址/docs]
 ---
 
 ## Android APP
