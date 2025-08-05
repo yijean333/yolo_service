@@ -40,14 +40,10 @@ ngrok http http://localhost:8000
 4. **API 簡介**
 
 * POST `/predict`：上傳圖片，回傳任務 ID
-* GET `/task/{task_id}`：查詢辨識結果
+* GET `/task/{task_id}`：查詢辨識結果 (JSON格式)
+* **GET `/task/{task_id}/image`：獲取帶檢測框的圖片 (JPEG格式)**
 * 更多 API 功能和詳細說明，請參考: `你的-ngrok網址/docs`
----
-
-## Android APP
-
-APP 會用 ngrok URL 呼叫 `/predict` 上傳圖片，拿到任務 ID 後，持續查 `/task/{task_id}` 獲得辨識結果。
-
+  
 ---
 
 ## 注意事項
