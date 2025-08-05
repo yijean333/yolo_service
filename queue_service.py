@@ -29,6 +29,10 @@ class Task:
     error: Optional[str] = None
     processing_time: Optional[float] = None
 
+    def get_image_data(self) -> bytes:
+            """獲取原始圖片數據"""
+            return self.image_data
+
 class AsyncQueueService:
     """使用 asyncio.Queue 的隊列服務（適合單機）"""
     
