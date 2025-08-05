@@ -1,5 +1,5 @@
 from fastapi import FastAPI, File, UploadFile, HTTPException
-from fastapi.responses import JSONResponse, PlainTextResponse
+from fastapi.responses import JSONResponse, PlainTextResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from ultralytics import YOLO
 import cv2
@@ -8,6 +8,7 @@ import time
 import torch
 import asyncio
 import uvicorn
+import io
 from queue_service import AsyncQueueService, TaskStatus
 
 app = FastAPI(title="YOLOv8 隊列檢測服務", version="1.0.0")
@@ -34,6 +35,55 @@ def resize_if_needed(img, max_dim=640):
         new_h = int(h * scale)
         return cv2.resize(img, (new_w, new_h), interpolation=cv2.INTER_LINEAR)
     return img
+
+def draw_detections_on_image(image_data: bytes, detections: list):
+    """在圖片上繪製檢測框"""
+    try:
+        # 解碼圖片
+        arr = np.frombuffer(image_data, dtype=np.uint8)
+        img = cv2.imdecode(arr, cv2.IMREAD_COLOR)
+        
+        if img is None:
+            raise Exception("無法解碼圖片")
+        
+        # 縮放圖片（與檢測時保持一致）
+        img_resized = resize_if_needed(img, max_dim=640)
+        
+        # 繪製檢測框
+        for detection in detections:
+            box = detection["box"]  # [x1, y1, x2, y2]
+            confidence = detection["confidence"]
+            label = detection["label"]
+            
+            # 繪製矩形框
+            cv2.rectangle(img_resized, (box[0], box[1]), (box[2], box[3]), (0, 255, 0), 2)
+            
+            # 準備標籤文字
+            text = f"{label}: {confidence:.2f}"
+            
+            # 計算文字大小
+            font = cv2.FONT_HERSHEY_SIMPLEX
+            font_scale = 0.6
+            thickness = 2
+            (text_width, text_height), _ = cv2.getTextSize(text, font, font_scale, thickness)
+            
+            # 繪製文字背景
+            cv2.rectangle(img_resized, 
+                         (box[0], box[1] - text_height - 10), 
+                         (box[0] + text_width, box[1]), 
+                         (0, 255, 0), -1)
+            
+            # 繪製文字
+            cv2.putText(img_resized, text, (box[0], box[1] - 5), 
+                       font, font_scale, (0, 0, 0), thickness)
+        
+        # 編碼為JPEG
+        _, buffer = cv2.imencode('.jpg', img_resized)
+        return buffer.tobytes()
+        
+    except Exception as e:
+        print(f"繪製檢測框錯誤: {str(e)}")
+        raise e
 
 def run_detection_sync(image_data: bytes):
     """同步檢測函數（供隊列工作者使用）"""
@@ -188,6 +238,38 @@ async def get_task_result(task_id: str):
         response["error"] = task.error
     
     return response
+
+@app.get("/task/{task_id}/image")
+async def get_task_result_image(task_id: str):
+    """獲取任務結果的帶檢測框圖片"""
+    task = await queue_service.get_task_status(task_id)
+    
+    if not task:
+        raise HTTPException(status_code=404, detail="任務不存在")
+    
+    if task.status != TaskStatus.COMPLETED:
+        raise HTTPException(status_code=400, detail=f"任務尚未完成，當前狀態: {task.status.value}")
+    
+    if not task.result or not task.result.get("success"):
+        raise HTTPException(status_code=400, detail="任務執行失敗或無結果")
+    
+    try:
+        # 獲取檢測結果
+        detections = task.result.get("detections", [])
+        
+        # 在圖片上繪製檢測框
+        image_with_boxes = draw_detections_on_image(task.get_image_data(), detections)
+        
+        # 返回圖片
+        return StreamingResponse(
+            io.BytesIO(image_with_boxes),
+            media_type="image/jpeg",
+            headers={"Content-Disposition": f"inline; filename=detection_result_{task_id}.jpg"}
+        )
+        
+    except Exception as e:
+        print(f"生成檢測結果圖片錯誤: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"生成圖片失敗: {str(e)}")
 
 @app.post("/predict-sync")
 async def predict_sync(file: UploadFile = File(...)):
