@@ -41,7 +41,7 @@ ngrok http http://localhost:8000
 
 * POST `/predict`：上傳圖片，回傳任務 ID
 * GET `/task/{task_id}`：查詢辨識結果 (JSON格式)
-* **GET `/task/{task_id}/image`：獲取帶檢測框的圖片 (JPEG格式)**
+* GET `/task/{task_id}/image`：獲取帶檢測框的圖片 (JPEG格式)
 * 更多 API 功能和詳細說明，請參考: `你的-ngrok網址/docs`
   
 ---
