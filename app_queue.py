@@ -56,7 +56,7 @@ def draw_detections_on_image(image_data: bytes, detections: list):
             label = detection["label"]
             
             # 繪製矩形框
-            cv2.rectangle(img_resized, (box[0], box[1]), (box[2], box[3]), (0, 255, 0), 2)
+            cv2.rectangle(img_resized, (box[0], box[1]), (box[2], box[3]), (0, 0, 255), 2)
             
             # 準備標籤文字
             text = f"{label}: {confidence:.2f}"
@@ -71,11 +71,11 @@ def draw_detections_on_image(image_data: bytes, detections: list):
             cv2.rectangle(img_resized, 
                          (box[0], box[1] - text_height - 10), 
                          (box[0] + text_width, box[1]), 
-                         (0, 255, 0), -1)
+                         (0, 0, 255), -1)
             
             # 繪製文字
             cv2.putText(img_resized, text, (box[0], box[1] - 5), 
-                       font, font_scale, (0, 0, 0), thickness)
+                       font, font_scale, (255, 255, 255), thickness)
         
         # 編碼為JPEG
         _, buffer = cv2.imencode('.jpg', img_resized)
@@ -113,7 +113,7 @@ def run_detection_sync(image_data: bytes):
                 augment=False,
                 agnostic_nms=True,
                 max_det=300,
-                conf=0.25,
+                conf=0.51,
                 iou=0.45,
             )[0]
         
